@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import argparse
+import datetime
 import socket
 import os
 import sys
@@ -127,20 +128,27 @@ class ICMPPing(NetworkApplication):
 
     def sendOnePing(self, icmpSocket, destinationAddress, ID):
         # 1. Build ICMP header
+        icmp_header = struct.pack("!BBHHH", 8, 0, ID, 0, ID, 0) #network formatting: 8 as the first byte, 0 as the second byte, ID as the next 2 bytes, ID as the next 2 bytes
         # 2. Checksum ICMP packet using given function
         # 3. Insert checksum into packet
+        icmp_header = struct.pack("!BBHHH", 8, 0, self.checksum(icmp_header), ID, 0, ID, 0)
         # 4. Send packet using socket
+        icmpSocket.send(self, icmpSocket)
         # 5. Return time of sending
+        return time.time()
         pass
 
     def doOnePing(self, destinationAddress, packetID, seq_num, timeout):
         # 1. Create ICMP socket
         icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
         # 2. Call sendOnePing function
+        self.sendOnePing(icmp_socket, destinationAddress, packetID)
         # 3. Call receiveOnePing function
+        self.receiveOnePing(icmp_socket, destinationAddress, packetID, timeout)
         # 4. Close ICMP socket
+        icmp_socket.close()
         # 5. Print out the delay (and other relevant details) using the printOneResult method, below is just an example.
-        self.printOneResult(destinationAddress, 50, 20.0, 0, 150)  # Example use of printOneResult - complete as appropriate
+        self.printOneResult(destinationAddress, 8, time.time(), packetID, timeout)  # Example use of printOneResult - complete as appropriate
         pass
 
     def __init__(self, args):
@@ -149,7 +157,8 @@ class ICMPPing(NetworkApplication):
         ip_address = socket.gethostbyname(args.hostname)
         # 2. Repeat below args.count times
         # 3. Call doOnePing function, approximately every second, below is just an example
-        self.doOnePing(ip_address, 0, 0, 2) #update last 3 parmeters
+        for x in range(0, args.count):
+            self.doOnePing(ip_address, x, x, 2)
 
 
 class Traceroute(NetworkApplication):
