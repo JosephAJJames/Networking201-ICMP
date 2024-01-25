@@ -119,28 +119,23 @@ class NetworkApplication:
 class ICMPPing(NetworkApplication):
 
     def receiveOnePing(self, icmpSocket, destinationAddress, ID, timeout):
-        # 1. Wait for the socket to receive a reply
-        # 2. If reply received, record time of receipt, otherwise, handle timeout
-        # 3. Unpack the imcp and ip headers for useful information, including Identifier, TTL, sequence number
-        # 5. Check that the Identifier (ID) matches between the request and reply
-        # 6. Return time of receipt, TTL, packetSize, sequence number
+        icmpSocket.listen(1)
+        con, addr = icmpSocket.accept()
+        
         pass
 
     def sendOnePing(self, icmpSocket, destinationAddress, ID):
-        # 1. Build ICMP header
         icmp_header = struct.pack("!BBHHH", 8, 0, ID, 0, ID, 0) #network formatting: 8 as the first byte, 0 as the second byte, ID as the next 2 bytes, ID as the next 2 bytes
-        # 2. Checksum ICMP packet using given function
-        # 3. Insert checksum into packet
         icmp_header = struct.pack("!BBHHH", 8, 0, self.checksum(icmp_header), ID, 0, ID, 0)
-        # 4. Send packet using socket
         icmpSocket.send(self, icmpSocket)
-        # 5. Return time of sending
         return time.time()
         pass
 
     def doOnePing(self, destinationAddress, packetID, seq_num, timeout):
         # 1. Create ICMP socket
         icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+        port = 8080
+        icmp_socket.bind((destinationAddress, port))
         # 2. Call sendOnePing function
         self.sendOnePing(icmp_socket, destinationAddress, packetID)
         # 3. Call receiveOnePing function
