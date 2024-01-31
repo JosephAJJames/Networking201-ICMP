@@ -125,23 +125,29 @@ class ICMPPing(NetworkApplication):
         pass
 
     def sendOnePing(self, icmpSocket, destinationAddress, ID):
-        icmp_header = struct.pack("!BBHHH", 8, 0, ID, 0, ID, 0) #network formatting: 8 as the first byte, 0 as the second byte, ID as the next 2 bytes, ID as the next 2 bytes
-        icmp_header = struct.pack("!BBHHH", 8, 0, self.checksum(icmp_header), ID, 0, ID, 0)
-        icmpSocket.send(self, icmpSocket)
+        print(destinationAddress)
+        icmp_header = struct.pack("!BBHHH", 8, 0, 0, ID, ID)  # First packing
+        checksum = self.checksum(icmp_header)  # Calculate checksum
+        icmp_header = struct.pack("!BBHHH", 8, 0, checksum, ID, ID)  # Second packing with correct checksum
+        port = 8000
+        print(icmp_header)
+        icmpSocket.sendto(icmp_header, (destinationAddress, port))
         return time.time()
         pass
 
     def doOnePing(self, destinationAddress, packetID, seq_num, timeout):
         # 1. Create ICMP socket
         icmp_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-        port = 8080
-        icmp_socket.bind((destinationAddress, port))
+        port = 8000
+        icmp_socket.bind(("127.0.0.1", port))
+        print("binding socket....")
         # 2. Call sendOnePing function
         self.sendOnePing(icmp_socket, destinationAddress, packetID)
         # 3. Call receiveOnePing function
-        self.receiveOnePing(icmp_socket, destinationAddress, packetID, timeout)
+        #self.receiveOnePing(icmp_socket, destinationAddress, packetID, timeout)
         # 4. Close ICMP socket
         icmp_socket.close()
+        print("socket closed")
         # 5. Print out the delay (and other relevant details) using the printOneResult method, below is just an example.
         self.printOneResult(destinationAddress, 8, time.time(), packetID, timeout)  # Example use of printOneResult - complete as appropriate
         pass
@@ -150,6 +156,7 @@ class ICMPPing(NetworkApplication):
         print('Ping to: %s...' % (args.hostname))
         # 1. Look up hostname, resolving it to an IP address
         ip_address = socket.gethostbyname(args.hostname)
+        print(ip_address)
         # 2. Repeat below args.count times
         # 3. Call doOnePing function, approximately every second, below is just an example
         for x in range(0, args.count):
